@@ -1,3 +1,5 @@
+import time
+
 from .utils import *
 from raid_helper import utils as raid_utils
 from raid_helper.utils.typing import *
@@ -35,8 +37,8 @@ def on_lockon_wave_cannon_kyrios(msg: ActorControlMessage[actor_control.SetLockO
     # 首次触发作为5*2大扇形的触发
     omega = next(raid_utils.find_actor_by_base_id(0x3d5c))
     t_actor = raid_utils.NActor.by_id(msg.source_id)
-    raid_utils.draw_rect(
-        pos=omega.pos,  facing=lambda _: glm.polar(t_actor.update().pos - omega.update().pos).y,
+    raid_utils.draw_rect( 
+        pos=omega, facing=lambda _: glm.polar(t_actor.update().pos - omega.update().pos).y,
         width=6, length=50, duration=5.1
 
     )
@@ -53,55 +55,51 @@ def on_lockon_wave_cannon_kyrios_far(msg: ActorControlMessage[actor_control.SetL
     omega = next(raid_utils.find_actor_by_base_id(0x3d5c))
 
     raid_utils.draw_fan(
-        pos=omega.pos, facing=lambda _: glm.polar(raid_utils.get_actor_by_dis(omega, -1).update().pos - omega.update().pos).y,
+        pos=omega, facing=lambda _: glm.polar(raid_utils.get_actor_by_dis(omega, -1).pos - omega.update().pos).y, 
         degree=120, radius=60, duration=6.1
 
     )
     raid_utils.draw_fan(
-        pos=omega.pos,
-        facing=lambda _: glm.polar(raid_utils.get_actor_by_dis(omega, -2).update().pos - omega.update().pos).y,
+        pos=omega,  
+        facing=lambda _: glm.polar(raid_utils.get_actor_by_dis(omega, -2).pos - omega.update().pos).y, 
         degree=120, radius=60, duration=6.1
 
     )
 
 
-@omega.on_object_spawn(0x1EB83D,0x1EB83C)
+@omega.on_object_spawn(0x1EB83C)
 def print_object_spawn(evt: 'NetworkMessage[zone_server.ObjectSpawn]'):
     # 塔生成的时候给它画个圈
     # p1的时候没有双人单人塔
     # 所以两个塔全画
-    #塔两个base id 0x1EB83D,0x1EB83C
+    # 塔两个base id 0x1EB83D,0x1EB83C
 
-    logger.debug(f'spawn obj S{evt.message.base_id=:x}')
-    tower =raid_utils.NActor.by_id(evt.header.source_id)
+    # logger.debug(f'spawn obj S{evt.message.base_id=:x}')
+    time.sleep(.1)  # FIX: on spawn 的等待内存里面生成对象
+    tower = raid_utils.NActor.by_id(evt.header.source_id)
     raid_utils.draw_circle(
-        radius=3,pos=tower,duration=10,color=glm.vec4(0.9,1,0,0.6)
+        radius=3, pos=tower, duration=10, color=glm.vec4(0.9, 1, 0, 0.6)
     )
 
-# @omega.on_add_status(3507)
-# @omega.on_add_status(3508)
-# @omega.on_add_status(3509)
-# @omega.on_add_status(3510)
-# def on_add_staus_wave_cannon_p1threeplayer(evt: 'ActorControlMessage[actor_control.AddStatus]'):
-#    if raid_utils.assert_status(raid_utils.NActor.by_id(evt.source_id),evt.param.status_id,5):
-#     omega = next(raid_utils.find_actor_by_base_id(0x3d5c))
-#     t_actor = raid_utils.NActor.by_id(evt.source_id)
-#     raid_utils.draw_rect(
-#         pos=omega, facing=lambda _: glm.polar(t_actor.update().pos - omega.update().pos).y,
-#         width=6, length=60, duration=5.1
-#
-#     )
 
-# @omega.on_add_status(3424)
-# @omega.on_add_status(3495)
-# @omega.on_add_status(3496)
-# @omega.on_add_status(3497)
-# def on_add_status_aoeone(evt: 'ActorControlMessage[actor_control.AddStatus]'):
-#     # 10s/16s/22s/28s 大约有个0.1s延迟，和上面同时判定
-#     # 执行技能 31502 Guided Missile Kyrios
-#     # 圆形，范围 5
-#     # 明显的3311分散
-#     if raid_utils.assert_status(raid_utils.NActor.by_id(evt.source_id),evt.param.status_id,5):
-#         raid_utils.draw_circle(
-#             radius=3, pos=raid_utils.NActor.by_id(evt.source_id), duration=5, color=glm.vec4(0.9, 1, 0, 0.6)
-#         )
+@omega.on_add_status(3507, 3508, 3509, 3510)
+def on_add_staus_wave_cannon_p1threeplayer(evt: 'ActorControlMessage[actor_control.AddStatus]'):
+    if raid_utils.assert_status(raid_utils.NActor.by_id(evt.source_id), evt.param.status_id, 5):
+        omega = next(raid_utils.find_actor_by_base_id(0x3d5c))
+        t_actor = raid_utils.NActor.by_id(evt.source_id)
+        raid_utils.draw_rect(
+            pos=omega, facing=lambda _: glm.polar(t_actor.update().pos - omega.update().pos).y,
+            width=6, length=60, duration=5.1
+
+        )
+
+
+@omega.on_add_status(3424, 3495, 3496, 3497)
+def on_add_status_aoeone(evt: 'ActorControlMessage[actor_control.AddStatus]'):
+    # 10s/16s/22s/28s 大约有个0.1s延迟，和上面同时判定
+    # 执行技能 31502 Guided Missile Kyrios
+    # 圆形，范围 5
+    # 明显的3311分散
+    actor = raid_utils.NActor.by_id(evt.source_id)
+    if raid_utils.assert_status(actor, evt.param.status_id, 5):
+        raid_utils.draw_circle(radius=3, pos=actor, duration=5)
